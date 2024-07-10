@@ -10,6 +10,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "Engine/LocalPlayer.h"
+#include "InteractableComponent.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -60,6 +61,9 @@ void ASafetyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ASafetyCharacter::Look);
+
+		// Interacting
+		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &ASafetyCharacter::Interact);
 	}
 	else
 	{
@@ -91,5 +95,25 @@ void ASafetyCharacter::Look(const FInputActionValue& Value)
 		// add yaw and pitch input to controller
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
+	}
+}
+
+void ASafetyCharacter::Interact(const FInputActionValue& Value)
+{
+	UE_LOG(LogTemp, Display, TEXT("Player interacted"));
+
+	if (ActorHasTag(TEXT("SAFE")))
+	{
+		FHitResult HitResult;
+		FVector TraceStart = FirstPersonCameraComponent->GetComponentLocation();
+		FVector TraceEnd = TraceStart + FirstPersonCameraComponent->GetForwardVector()*100;
+		GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_Visibility);
+
+
+		if (HitResult.GetActor() && HitResult.GetActor()->FindComponentByClass<UInteractableComponent>())
+		{
+			UInteractableComponent* Interactable = HitResult.GetActor()->FindComponentByClass<UInteractableComponent>();
+			Interactable->OnInteract.Broadcast();
+		}
 	}
 }

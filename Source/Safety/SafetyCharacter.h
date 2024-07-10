@@ -36,9 +36,18 @@ class ASafetyCharacter : public ACharacter
 	/** Move Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	UInputAction* MoveAction;
+
+	/** Interact Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* InteractAction;
 	
 public:
 	ASafetyCharacter();
+
+	UFUNCTION(BlueprintCallable)
+	bool IsHoldingItem() const { return bIsHoldingItem; }
+
+	void SetIsHoldingItem(bool NewValue) { bIsHoldingItem = NewValue; }
 
 protected:
 	virtual void BeginPlay();
@@ -56,10 +65,16 @@ protected:
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
 
+	/** Called for interact input */
+	void Interact(const FInputActionValue& Value);
+
 protected:
 	// APawn interface
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
 	// End of APawn interface
+
+private:
+	bool bIsHoldingItem = false;
 
 public:
 	/** Returns Mesh1P subobject **/

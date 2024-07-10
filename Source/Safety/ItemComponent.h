@@ -9,6 +9,7 @@
 /**
  * 
  */
+
 UCLASS(Blueprintable, BlueprintType, ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class SAFETY_API UItemComponent : public UStaticMeshComponent
 {
@@ -19,8 +20,23 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Item")
 	bool AttachItem(class ASafetyCharacter* TargetCharacter);
 
+	/** Destroys the item.  */
+	UFUNCTION(BlueprintCallable, Category = "Item")
+	void HandleDestruction();
+
+protected:
+	UPROPERTY(EditAnywhere, Category = "Happiness")
+	FVector4 SaturationPickupVector;
+
+	UPROPERTY(EditAnywhere, Category = "Happiness")
+	FVector4 SaturationPutdownVector;
+
 private:
 	/** The Character holding this weapon*/
 	ASafetyCharacter* Character;
+
+	void UpdateSaturationPickup();
+
+	void UpdateSaturationPutdown();
 	
 };

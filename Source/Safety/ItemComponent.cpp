@@ -3,6 +3,8 @@
 
 #include "ItemComponent.h"
 #include "SafetyCharacter.h"
+#include "TP_PickUpComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 bool UItemComponent::AttachItem(ASafetyCharacter* TargetCharacter)
 {
@@ -10,7 +12,7 @@ bool UItemComponent::AttachItem(ASafetyCharacter* TargetCharacter)
 
 	// Check that the character is valid, and has no item component yet
 	// TODO: Support for multiple items
-	if (Character == nullptr || Character->GetInstanceComponents().FindItemByClass<UItemComponent>())
+	if (Character == nullptr || Character->IsHoldingItem())
 	{
 		return false;
 	}
@@ -22,6 +24,62 @@ bool UItemComponent::AttachItem(ASafetyCharacter* TargetCharacter)
 	// add the item as an instance component to the character
 	Character->AddInstanceComponent(this);
 
+	Character->SetIsHoldingItem(true);
+
+	UpdateSaturationPickup();
+
 
 	return true;
+}
+
+void UItemComponent::HandleDestruction()
+{
+	UpdateSaturationPutdown();
+
+	if (Character)
+	{
+		if (UTP_PickUpComponent* PickUpComp = Cast<UTP_PickUpComponent>(GetChildComponent(0)))
+		{
+			PickUpComp->OnPutDown.Broadcast(Character);
+			Character->SetIsHoldingItem(false);
+			UE_LOG(LogTemp, Display, TEXT("IsHoldingItem: %d"), Character->IsHoldingItem());
+
+			Character->RemoveInstanceComponent(this);
+		}
+
+	}
+
+	//TODO: Fizzle anim
+	GetOwner()->Destroy();
+
+}
+
+void UItemComponent::UpdateSaturationPickup()
+{
+	UWorld* World = GetWorld();
+	int32 PPCount = GetWorld()->PostProcessVolumes.Num();
+	for (int i = 0; i < PPCount; i++)
+	{
+		FPostProcessVolumeProperties Volume = World->PostProcessVolumes[i]->GetProperties();
+		if (Volume.bIsUnbound)
+		{
+			FPostProcessSettings* Settings = (FPostProcessSettings*)Volume.Settings;
+			Settings->ColorSaturation += SaturationPickupVector;
+		}
+	}
+}
+
+void UItemComponent::UpdateSaturationPutdown()
+{
+	UWorld* World = GetWorld();
+	int32 PPCount = GetWorld()->PostProcessVolumes.Num();
+	for (int i = 0; i < PPCount; i++)
+	{
+		FPostProcessVolumeProperties Volume = World->PostProcessVolumes[i]->GetProperties();
+		if (Volume.bIsUnbound)
+		{
+			FPostProcessSettings* Settings = (FPostProcessSettings*)Volume.Settings;
+			Settings->ColorSaturation += SaturationPutdownVector;
+		}
+	}
 }
