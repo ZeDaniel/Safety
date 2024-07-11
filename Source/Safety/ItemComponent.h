@@ -31,6 +31,18 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Happiness")
 	FVector4 SaturationPutdownVector;
 
+	UPROPERTY(EditAnywhere, Category = "Happiness")
+	FVector4 ContrastPickupVector;
+
+	UPROPERTY(EditAnywhere, Category = "Happiness")
+	FVector4 ContrastPutdownVector;
+
+	UPROPERTY(EditAnywhere, Category = "Happiness")
+	bool ResetOnPickup = false;
+
+	UPROPERTY(EditAnywhere, Category = "Happiness")
+	bool ResetOnPutdown = false;
+
 private:
 	/** The Character holding this weapon*/
 	ASafetyCharacter* Character;

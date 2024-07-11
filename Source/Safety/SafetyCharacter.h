@@ -49,6 +49,9 @@ public:
 
 	void SetIsHoldingItem(bool NewValue) { bIsHoldingItem = NewValue; }
 
+	//UFUNCTION(BlueprintCallable)
+	//void SetActiveWidget(UUserWidget* NewWidget) { ActiveWidget = NewWidget; }
+
 protected:
 	virtual void BeginPlay();
 
@@ -75,6 +78,8 @@ protected:
 
 private:
 	bool bIsHoldingItem = false;
+
+	//class UUserWidget* ActiveWidget;
 
 public:
 	/** Returns Mesh1P subobject **/

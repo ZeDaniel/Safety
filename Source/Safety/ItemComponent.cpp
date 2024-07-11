@@ -34,10 +34,9 @@ bool UItemComponent::AttachItem(ASafetyCharacter* TargetCharacter)
 
 void UItemComponent::HandleDestruction()
 {
-	UpdateSaturationPutdown();
-
 	if (Character)
 	{
+		UpdateSaturationPutdown();
 		if (UTP_PickUpComponent* PickUpComp = Cast<UTP_PickUpComponent>(GetChildComponent(0)))
 		{
 			PickUpComp->OnPutDown.Broadcast(Character);
@@ -47,6 +46,10 @@ void UItemComponent::HandleDestruction()
 			Character->RemoveInstanceComponent(this);
 		}
 
+	}
+	else
+	{
+		UpdateSaturationPickup();
 	}
 
 	//TODO: Fizzle anim
@@ -63,8 +66,18 @@ void UItemComponent::UpdateSaturationPickup()
 		FPostProcessVolumeProperties Volume = World->PostProcessVolumes[i]->GetProperties();
 		if (Volume.bIsUnbound)
 		{
-			FPostProcessSettings* Settings = (FPostProcessSettings*)Volume.Settings;
-			Settings->ColorSaturation += SaturationPickupVector;
+			if (ResetOnPickup)
+			{
+				FPostProcessSettings* Settings = (FPostProcessSettings*)Volume.Settings;
+				Settings->ColorSaturation = FVector4(1.f, 1.f, 1.f, 1.f);
+				Settings->ColorContrast = FVector4(1.f, 1.f, 1.f, 1.f);
+			}
+			else
+			{
+				FPostProcessSettings* Settings = (FPostProcessSettings*)Volume.Settings;
+				Settings->ColorSaturation += SaturationPickupVector;
+				Settings->ColorContrast += ContrastPickupVector;
+			}
 		}
 	}
 }
@@ -78,8 +91,18 @@ void UItemComponent::UpdateSaturationPutdown()
 		FPostProcessVolumeProperties Volume = World->PostProcessVolumes[i]->GetProperties();
 		if (Volume.bIsUnbound)
 		{
-			FPostProcessSettings* Settings = (FPostProcessSettings*)Volume.Settings;
-			Settings->ColorSaturation += SaturationPutdownVector;
+			if (ResetOnPutdown)
+			{
+				FPostProcessSettings* Settings = (FPostProcessSettings*)Volume.Settings;
+				Settings->ColorSaturation = FVector4(1.f, 1.f, 1.f, 1.f);
+				Settings->ColorContrast = FVector4(1.f, 1.f, 1.f, 1.f);
+			}
+			else
+			{
+				FPostProcessSettings* Settings = (FPostProcessSettings*)Volume.Settings;
+				Settings->ColorSaturation += SaturationPutdownVector;
+				Settings->ColorContrast += SaturationPutdownVector;
+			}
 		}
 	}
 }

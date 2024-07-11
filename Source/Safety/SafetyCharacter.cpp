@@ -11,6 +11,8 @@
 #include "InputActionValue.h"
 #include "Engine/LocalPlayer.h"
 #include "InteractableComponent.h"
+#include "SafetyPlayerController.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -80,7 +82,8 @@ void ASafetyCharacter::Move(const FInputActionValue& Value)
 	if (Controller != nullptr)
 	{
 		// add movement 
-		AddMovementInput(GetActorForwardVector(), MovementVector.Y);
+		//AddMovementInput(GetActorForwardVector(), MovementVector.Y);
+		AddMovementInput(GetFirstPersonCameraComponent()->GetForwardVector(), MovementVector.Y);
 		AddMovementInput(GetActorRightVector(), MovementVector.X);
 	}
 }
@@ -102,18 +105,34 @@ void ASafetyCharacter::Interact(const FInputActionValue& Value)
 {
 	UE_LOG(LogTemp, Display, TEXT("Player interacted"));
 
+	FHitResult HitResult;
+	FVector TraceStart = FirstPersonCameraComponent->GetComponentLocation();
+	FVector TraceEnd = TraceStart + FirstPersonCameraComponent->GetForwardVector() * 500;
+	GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_Visibility);
+
+
+	if (HitResult.GetActor() && HitResult.GetActor()->FindComponentByClass<UInteractableComponent>())
+	{
+		UInteractableComponent* Interactable = HitResult.GetActor()->FindComponentByClass<UInteractableComponent>();
+		Interactable->OnInteract.Broadcast();
+	}
+	
 	if (ActorHasTag(TEXT("SAFE")))
 	{
-		FHitResult HitResult;
-		FVector TraceStart = FirstPersonCameraComponent->GetComponentLocation();
-		FVector TraceEnd = TraceStart + FirstPersonCameraComponent->GetForwardVector()*100;
-		GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_Visibility);
-
-
-		if (HitResult.GetActor() && HitResult.GetActor()->FindComponentByClass<UInteractableComponent>())
+		UWorld* World = GetWorld();
+		int32 PPCount = GetWorld()->PostProcessVolumes.Num();
+		for (int i = 0; i < PPCount; i++)
 		{
-			UInteractableComponent* Interactable = HitResult.GetActor()->FindComponentByClass<UInteractableComponent>();
-			Interactable->OnInteract.Broadcast();
+			FPostProcessVolumeProperties Volume = World->PostProcessVolumes[i]->GetProperties();
+			if (Volume.bIsUnbound)
+			{
+				FPostProcessSettings* Settings = (FPostProcessSettings*)Volume.Settings;
+				Settings->ColorSaturation = FVector4(1.f, 1.f, 1.f, 1.f);
+				Settings->ColorContrast = FVector4(1.f, 1.f, 1.f, 1.f);
+			}
 		}
+		
+		UWidgetLayoutLibrary::RemoveAllWidgets(GetWorld());
 	}
+
 }

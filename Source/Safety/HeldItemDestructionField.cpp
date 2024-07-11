@@ -39,13 +39,17 @@ void AHeldItemDestructionField::OnComponentBeginOverlap(UPrimitiveComponent* Ove
 			UItemComponent* FoundItem;
 			Character->GetInstanceComponents().FindItemByClass<UItemComponent>(&FoundItem);
 
-			CheckForPassThroughItem(FoundItem);
+			//Prevent destruction if item has exempt tag
+			if (!FoundItem->ComponentHasTag(ExemptItemTag))
+			{
+				CheckForPassThroughItem(FoundItem);
 
-			FoundItem->HandleDestruction();
+				FoundItem->HandleDestruction();
 
-			NumDestroyedItems++;
+				NumDestroyedItems++;
 
-			CheckActionThreshold();
+				CheckActionThreshold();
+			}
 		}
 		else
 		{
