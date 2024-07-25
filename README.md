@@ -1,2 +1,2 @@
 # Safety
- Game about overcorrecting for safety
+ Game about safety and risk
