@@ -81,9 +81,15 @@ void ASafetyCharacter::Move(const FInputActionValue& Value)
 
 	if (Controller != nullptr)
 	{
-		// add movement 
-		//AddMovementInput(GetActorForwardVector(), MovementVector.Y);
-		AddMovementInput(GetFirstPersonCameraComponent()->GetForwardVector(), MovementVector.Y);
+		if (IsFlying)
+		{
+			AddMovementInput(GetFirstPersonCameraComponent()->GetForwardVector(), MovementVector.Y);
+		}
+		else
+		{
+			AddMovementInput(GetActorForwardVector(), MovementVector.Y);
+		}
+		
 		AddMovementInput(GetActorRightVector(), MovementVector.X);
 	}
 }

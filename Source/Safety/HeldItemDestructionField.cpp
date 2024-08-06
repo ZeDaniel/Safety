@@ -29,40 +29,53 @@ void AHeldItemDestructionField::OnComponentBeginOverlap(UPrimitiveComponent* Ove
 {
 	Super::OnComponentBeginOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 
-	//Check for player character and if an item is already held
-	if (ASafetyCharacter* Character = Cast<ASafetyCharacter>(OtherActor))
+	//Only do something if gate is active
+	if (bIsActive)
 	{
-		UE_LOG(LogTemp, Display, TEXT("Valid Character walked into HELD ITEM volume"));
-		if (Character->IsHoldingItem())
+		//Check for player character and if an item is already held
+		if (ASafetyCharacter* Character = Cast<ASafetyCharacter>(OtherActor))
 		{
-			UE_LOG(LogTemp, Display, TEXT("Held item found"));
-			UItemComponent* FoundItem;
-			Character->GetInstanceComponents().FindItemByClass<UItemComponent>(&FoundItem);
-
-			//Prevent destruction if item has exempt tag
-			if (!FoundItem->ComponentHasTag(ExemptItemTag))
+			UE_LOG(LogTemp, Display, TEXT("Valid Character walked into HELD ITEM volume"));
+			if (Character->IsHoldingItem())
 			{
-				CheckForPassThroughItem(FoundItem);
+				UE_LOG(LogTemp, Display, TEXT("Held item found"));
+				UItemComponent* FoundItem;
+				Character->GetInstanceComponents().FindItemByClass<UItemComponent>(&FoundItem);
 
-				FoundItem->HandleDestruction();
+				//Prevent destruction if item has exempt tag
+				if (!FoundItem->ComponentHasTag(ExemptItemTag))
+				{
+					CheckForPassThroughItem(FoundItem);
 
-				NumDestroyedItems++;
+					FoundItem->HandleDestruction();
 
-				CheckActionThreshold();
+					NumDestroyedItems++;
+
+					CheckActionThreshold();
+				}
 			}
-		}
-		else
-		{
-			UE_LOG(LogTemp, Display, TEXT("No held item, do nothing"));
-		}
-		
-	}
+			else
+			{
+				UE_LOG(LogTemp, Display, TEXT("No held item, do nothing"));
+			}
 
+		}
+	}
 }
 
 void AHeldItemDestructionField::SetMaterial(UMaterialInstance* NewMaterial)
 {
 	MeshComp->SetMaterial(0, NewMaterial);
+
+	TArray<USceneComponent*> MeshChildren = MeshComp->GetAttachChildren();
+
+	for (USceneComponent* Child : MeshChildren)
+	{
+		if (UMeshComponent* ChildMesh = Cast<UMeshComponent>(Child))
+		{
+			ChildMesh->SetMaterial(0, NewMaterial);
+		}
+	}
 }
 
 void AHeldItemDestructionField::CheckForPassThroughItem(UItemComponent* Item)
@@ -72,7 +85,7 @@ void AHeldItemDestructionField::CheckForPassThroughItem(UItemComponent* Item)
 		SetMaterial(AcceptMaterial);
 
 		FTimerHandle AcceptTimer;
-		FTimerDelegate AcceptTimerDelegate = FTimerDelegate::CreateUObject(this, &AHeldItemDestructionField::SetActorEnableCollision, false);
+		FTimerDelegate AcceptTimerDelegate = FTimerDelegate::CreateUObject(this, &AHeldItemDestructionField::EnablePlayerPassthrough);
 		GetWorldTimerManager().SetTimer(AcceptTimer, AcceptTimerDelegate, AcceptanceTimerLength, false);
 	}
 	else
@@ -91,6 +104,12 @@ void AHeldItemDestructionField::CheckActionThreshold()
 	{
 		PerformAction();
 		NumDestroyedItems = 0;
-	}
-		
+	}	
+}
+
+void AHeldItemDestructionField::EnablePlayerPassthrough()
+{
+	MeshComp->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+	
+	bIsActive = false;
 }

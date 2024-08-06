@@ -71,6 +71,9 @@ protected:
 	/** Called for interact input */
 	void Interact(const FInputActionValue& Value);
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	bool IsFlying = false;
+
 protected:
 	// APawn interface
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;

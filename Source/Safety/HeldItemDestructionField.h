@@ -53,4 +53,6 @@ private:
 	void CheckForPassThroughItem(class UItemComponent* Item);
 
 	void CheckActionThreshold();
+
+	void EnablePlayerPassthrough();
 };
